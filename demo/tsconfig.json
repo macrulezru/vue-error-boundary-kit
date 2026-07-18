@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2020", "DOM"],
+    "jsx": "preserve",
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "types": ["node"],
+    "paths": {
+      "vue-error-boundary-kit": ["../src/index.ts"],
+      "vue-error-boundary-kit/global-capture": ["../src/useGlobalErrorCapture.ts"],
+      "vue-error-boundary-kit/devtools": ["../src/devtools.ts"],
+      "vue-error-boundary-kit/adapters/rate-limit": ["../src/adapters/rateLimit.ts"],
+      "vue-error-boundary-kit/adapters/*": ["../src/adapters/*"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.ts", "env.d.ts"]
+}
