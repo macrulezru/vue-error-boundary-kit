@@ -1,4 +1,13 @@
-# vue-error-boundary-kit
+<div align="center" style="background:#111827;border-radius:20px;padding:28px 20px 20px;margin-bottom:32px">
+  <h1 style="color:#f9fafb;margin:0 0 32px;font-size:2.2em;letter-spacing:-0.03em;font-weight:700;font-family:sans-serif">
+    vue-error-boundary-kit
+  </h1>
+  <img
+    src="https://s3.twcstorage.ru/c9a2cc89-780f97fd-311d-4a1a-b86f-c25665c9dc46/images/npm/vue-error-boundary-kit.webp"
+    alt="vue-virtual-scroller-kit"
+    style="max-width:100%;width:auto;height:300px;border-radius:12px"
+  />
+</div>
 
 Production-ready error boundaries for Vue 3 — a declarative `<ErrorBoundary>` component, a `useErrorBoundary()` composable for programmatic use, and an adapter-based reporting layer (Sentry / Bugsnag / LogRocket / plain HTTP) that isn't hard-baked into the core.
 
@@ -318,3 +327,31 @@ What *is* guaranteed, and covered by tests:
 | Vapor-mode readiness | N/A | depends on Nuxt | only uses official `onErrorCaptured`/`h()` — no internal VDOM renderer APIs |
 
 Not in v1: a full Vue Devtools browser-extension custom inspector (the in-app `<ErrorHistoryPanel>` above covers the same need without adding `@vue/devtools-api` as a dependency).
+
+---
+
+## License
+
+MIT
+
+---
+
+## Author
+
+Danil Lisin Vladimirovich aka Macrulez
+
+GitHub: [macrulezru](https://github.com/macrulezru) · Website: [macrulez.ru/en](https://macrulez.ru/en)
+
+Questions and bugs — [issues](https://github.com/macrulezru/vue-error-boundary-kit/issues)
+
+---
+
+## 💖 Support the project
+
+Open source takes time and effort. If my work saves you time or brings value, consider supporting further development.
+
+<a href="https://donate.cryptocloud.plus/M6O34NIN" target="_blank">
+  <img src="https://img.shields.io/badge/Donate-CryptoCloud-8A2BE2?style=for-the-badge&logo=cryptocurrency&logoColor=white" alt="Donate via CryptoCloud">
+</a>
+
+Thank you for being part of this journey. ❤️
