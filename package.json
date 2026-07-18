@@ -1,0 +1,119 @@
+{
+  "name": "vue-error-boundary-kit",
+  "version": "0.1.0",
+  "description": "Production-ready error boundaries for Vue 3 — declarative <ErrorBoundary> component, useErrorBoundary() composable, adapter-based error reporting (Sentry/Bugsnag/custom), SSR-safe.",
+  "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
+  "license": "MIT",
+  "homepage": "https://github.com/macrulezru/vue-error-boundary-kit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/macrulezru/vue-error-boundary-kit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/macrulezru/vue-error-boundary-kit/issues"
+  },
+  "keywords": [
+    "vue",
+    "vue3",
+    "error-boundary",
+    "error-handling",
+    "ssr",
+    "nuxt",
+    "typescript"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./global-capture": {
+      "types": "./dist/useGlobalErrorCapture.d.ts",
+      "import": "./dist/useGlobalErrorCapture.mjs",
+      "require": "./dist/useGlobalErrorCapture.cjs"
+    },
+    "./adapters/console": {
+      "types": "./dist/adapters/console.d.ts",
+      "import": "./dist/adapters/console.mjs",
+      "require": "./dist/adapters/console.cjs"
+    },
+    "./adapters/http": {
+      "types": "./dist/adapters/http.d.ts",
+      "import": "./dist/adapters/http.mjs",
+      "require": "./dist/adapters/http.cjs"
+    },
+    "./adapters/sentry": {
+      "types": "./dist/adapters/sentry.d.ts",
+      "import": "./dist/adapters/sentry.mjs",
+      "require": "./dist/adapters/sentry.cjs"
+    },
+    "./adapters/bugsnag": {
+      "types": "./dist/adapters/bugsnag.d.ts",
+      "import": "./dist/adapters/bugsnag.mjs",
+      "require": "./dist/adapters/bugsnag.cjs"
+    },
+    "./adapters/logrocket": {
+      "types": "./dist/adapters/logrocket.d.ts",
+      "import": "./dist/adapters/logrocket.mjs",
+      "require": "./dist/adapters/logrocket.cjs"
+    },
+    "./adapters/rate-limit": {
+      "types": "./dist/adapters/rateLimit.d.ts",
+      "import": "./dist/adapters/rateLimit.mjs",
+      "require": "./dist/adapters/rateLimit.cjs"
+    },
+    "./devtools": {
+      "types": "./dist/devtools.d.ts",
+      "import": "./dist/devtools.mjs",
+      "require": "./dist/devtools.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "vite build && vue-tsc -p tsconfig.build.json --declaration --emitDeclarationOnly --outDir dist",
+    "dev": "vite build --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "vue-tsc --noEmit",
+    "demo": "npm run dev --prefix demo",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "lint": "eslint . --ext .vue,.js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write src/"
+  },
+  "peerDependencies": {
+    "vue": "^3.4.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@vitejs/plugin-vue": "^5.0.0",
+    "@vitest/coverage-v8": "^2.0.0",
+    "@vue/server-renderer": "^3.4.0",
+    "@vue/test-utils": "^2.4.0",
+    "eslint": "^10.4.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.9.1",
+    "globals": "^17.6.0",
+    "happy-dom": "^14.0.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.60.0",
+    "vite": "^5.4.21",
+    "vite-plugin-dts": "^3.0.0",
+    "vitest": "^2.0.0",
+    "vue": "^3.4.0",
+    "vue-tsc": "^2.0.0"
+  }
+}
