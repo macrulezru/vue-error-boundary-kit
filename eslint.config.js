@@ -34,15 +34,19 @@ export default tseslint.config(
     },
   },
 
-  // Test files
+  // Test files (src/testing.ts ships the same kind of throw-on-demand test-double components,
+  // just as a public entry point rather than a private test helper)
   {
-    files: ['src/**/__tests__/**/*.ts'],
+    files: ['src/**/__tests__/**/*.ts', 'src/testing.ts'],
     languageOptions: {
       globals: { ...globals.browser, ...globals.node },
     },
     rules: {
       'vue/one-component-per-file': 'off',
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
 
@@ -50,7 +54,10 @@ export default tseslint.config(
   {
     files: ['src/**/*.{ts,vue}'],
     rules: {
-      '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
       'vue/multi-word-component-names': 'off',
       'vue/require-default-prop': 'off',
