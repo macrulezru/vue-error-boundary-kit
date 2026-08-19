@@ -17,6 +17,8 @@ export default defineConfig({
       entry: {
         index: resolve(import.meta.dirname, 'src/index.ts'),
         asyncBoundary: resolve(import.meta.dirname, 'src/asyncBoundary.ts'),
+        testing: resolve(import.meta.dirname, 'src/testing.ts'),
+        retryWithBackoff: resolve(import.meta.dirname, 'src/retryWithBackoff.ts'),
         useGlobalErrorCapture: resolve(import.meta.dirname, 'src/useGlobalErrorCapture.ts'),
         devtools: resolve(import.meta.dirname, 'src/devtools.ts'),
         'adapters/console': resolve(import.meta.dirname, 'src/adapters/console.ts'),
@@ -30,6 +32,7 @@ export default defineConfig({
         'nuxt/module': resolve(import.meta.dirname, 'src/nuxt/module.ts'),
         'nuxt/runtime': resolve(import.meta.dirname, 'src/nuxt/runtime.ts'),
         'integrations/tanstackQuery': resolve(import.meta.dirname, 'src/integrations/tanstackQuery.ts'),
+        router: resolve(import.meta.dirname, 'src/router.ts'),
       },
       formats: ['es', 'cjs'],
       fileName: (format, entryName) => (format === 'es' ? `${entryName}.mjs` : `${entryName}.cjs`),
@@ -39,8 +42,9 @@ export default defineConfig({
       // build/config time, which always has it available transitively via `nuxt` itself).
       // nuxt/app is the runtime composables entry used by src/nuxt/runtime.ts, resolvable only
       // inside a real Nuxt app build. @tanstack/vue-query is an optional peer used only by
-      // src/integrations/tanstackQuery.ts. None of these should ever be bundled into our output.
-      external: ['vue', '@nuxt/kit', 'nuxt/app', '@tanstack/vue-query'],
+      // src/integrations/tanstackQuery.ts. vue-router is an optional peer used only by
+      // src/router.ts. None of these should ever be bundled into our output.
+      external: ['vue', '@nuxt/kit', 'nuxt/app', '@tanstack/vue-query', 'vue-router'],
       output: {
         globals: { vue: 'Vue' },
         exports: 'named',

@@ -1,6 +1,6 @@
 {
   "name": "vue-error-boundary-kit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Production-ready error boundaries for Vue 3 — declarative <ErrorBoundary> component, useErrorBoundary() composable, adapter-based error reporting (Sentry/Bugsnag/custom), SSR-safe.",
   "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
   "license": "MIT",
@@ -46,6 +46,16 @@
       "types": "./dist/asyncBoundary.d.ts",
       "import": "./dist/asyncBoundary.mjs",
       "require": "./dist/asyncBoundary.cjs"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "import": "./dist/testing.mjs",
+      "require": "./dist/testing.cjs"
+    },
+    "./retry-backoff": {
+      "types": "./dist/retryWithBackoff.d.ts",
+      "import": "./dist/retryWithBackoff.mjs",
+      "require": "./dist/retryWithBackoff.cjs"
     },
     "./adapters/console": {
       "types": "./dist/adapters/console.d.ts",
@@ -106,6 +116,11 @@
       "types": "./dist/integrations/tanstackQuery.d.ts",
       "import": "./dist/integrations/tanstackQuery.mjs",
       "require": "./dist/integrations/tanstackQuery.cjs"
+    },
+    "./router": {
+      "types": "./dist/router.d.ts",
+      "import": "./dist/router.mjs",
+      "require": "./dist/router.cjs"
     }
   },
   "sideEffects": false,
@@ -136,13 +151,17 @@
   "peerDependencies": {
     "vue": "^3.4.0",
     "@nuxt/kit": "^3.0.0 || ^4.0.0",
-    "@tanstack/vue-query": "^5.0.0"
+    "@tanstack/vue-query": "^5.0.0",
+    "vue-router": "^4.0.0 || ^5.0.0"
   },
   "peerDependenciesMeta": {
     "@nuxt/kit": {
       "optional": true
     },
     "@tanstack/vue-query": {
+      "optional": true
+    },
+    "vue-router": {
       "optional": true
     }
   },
@@ -167,6 +186,7 @@
     "vite-plugin-dts": "^5.0.3",
     "vitest": "^4.1.11",
     "vue": "^3.5.41",
+    "vue-router": "^5.2.0",
     "vue-tsc": "^3.3.10"
   }
 }
