@@ -12,6 +12,7 @@ demo/dist/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+todo.md
 Thumbs.db
 desktop.ini
 .vscode/
@@ -27,3 +28,5 @@ desktop.ini
 .env.local
 .env.*.local
 .vitest-results/
+.claude/
+.claude/worktrees/

@@ -15,8 +15,10 @@ function makeError(overrides: Partial<CapturedError> = {}): CapturedError {
   }
 }
 
-function makeEvent(): BugsnagEventLike & { addMetadata: ReturnType<typeof vi.fn> } {
-  return { addMetadata: vi.fn() }
+function makeEvent(): BugsnagEventLike & {
+  addMetadata: ReturnType<typeof vi.fn<BugsnagEventLike['addMetadata']>>
+} {
+  return { addMetadata: vi.fn<BugsnagEventLike['addMetadata']>() }
 }
 
 describe('createBugsnagReporter', () => {
