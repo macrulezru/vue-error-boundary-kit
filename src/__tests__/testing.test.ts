@@ -107,6 +107,22 @@ describe('testing utilities', () => {
       expect(typeof captured.timestamp).toBe('number')
     })
 
+    it('an explicit undefined in overrides does not clobber the required-field defaults', () => {
+      // Regression test: defaults must be applied *after* spreading overrides, or a caller
+      // passing `{ message: undefined, ... }` (e.g. via a generic override-composing helper)
+      // would produce a CapturedError with message/source/timestamp/error actually undefined.
+      const captured = makeCapturedError({
+        message: undefined,
+        source: undefined,
+        timestamp: undefined,
+        error: undefined,
+      })
+      expect(captured.message).toBe('test error')
+      expect(captured.source).toBe('manual')
+      expect(captured.error).toBeInstanceOf(Error)
+      expect(typeof captured.timestamp).toBe('number')
+    })
+
     it('respects overrides', () => {
       const captured = makeCapturedError({
         message: 'custom',

@@ -60,11 +60,11 @@ export const ThrowAbortError = defineComponent({
 export function makeCapturedError(overrides: Partial<CapturedError> = {}): CapturedError {
   const message = overrides.message ?? 'test error'
   return {
+    ...overrides,
     error: overrides.error ?? new Error(message),
     message,
     source: overrides.source ?? 'manual',
     timestamp: overrides.timestamp ?? Date.now(),
-    ...overrides,
   }
 }
 

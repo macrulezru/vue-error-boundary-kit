@@ -480,7 +480,7 @@ import {
 
 ```ts
 import { mount } from '@vue/test-utils'
-import { nextTick } from 'vue'
+import { h, nextTick } from 'vue'
 import { ErrorBoundary } from 'vue-error-boundary-kit'
 import { ThrowInRender, createRecordingReporter } from 'vue-error-boundary-kit/testing'
 
