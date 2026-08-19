@@ -16,7 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['18.x', '20.x']
+        # Vite 8 / rolldown require Node ^20.19.0 || >=22.12.0 (they import node:util's
+        # styleText, added in 20.12/22 and not present at all in Node 18) — see engines.node.
+        node: ['20.x', '22.x']
     steps:
       - uses: actions/checkout@v4
 

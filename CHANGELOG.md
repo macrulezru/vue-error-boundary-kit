@@ -15,10 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `adapters/otel` — `createOtelReporter({ tracer, spanName?, attributes? })`: starts a span per error, calls `recordException()` + `setStatus({ code: ERROR })`, attaches the `CapturedError` fields as span attributes. Structurally typed like the Sentry/Bugsnag/LogRocket adapters — `@opentelemetry/api` is never imported by this package (verified: a minimal real usage of it bundles to ~2.8 kB gzip on its own, so importing it directly would cost every consumer of this adapter, unlike Sentry/Bugsnag/LogRocket where the SDK is assumed already-initialized for other reasons)
 - `<AsyncBoundary>` (`vue-error-boundary-kit/async-boundary`) — `<Suspense>` and `<ErrorBoundary>` combined into one component (`default`/`loading`/`fallback` slots), for the async-setup/async-component case that today needs manual nesting. A composition over the existing `<ErrorBoundary>` (same props/events/exposed API), not a reimplementation — kept as its own entry point rather than added to the core bundle, so it costs nothing unless imported
 - `adapters/breadcrumbs` — `createBreadcrumbTrail({ limit? })` (a rolling, manually-recorded event trail — nothing auto-instrumented) + `withBreadcrumbs(reporter, { trail, contextKey? })`, a reporter wrapper that merges the trail's current entries into every `report()` call's context. `trail.record` is itself an `ErrorReporter`, so captured errors can feed the same trail. Its own isolated entry point — core bundle untouched
-- CI (GitHub Actions): lint/format/typecheck/test+coverage/build on every push/PR (Node 18.x & 20.x), plus a tag-triggered publish workflow
+- CI (GitHub Actions): lint/format/typecheck/test+coverage/build on every push/PR (Node 20.x & 22.x), plus a tag-triggered publish workflow
 - `CONTRIBUTING.md`, issue templates (bug report / feature request), PR template
 - npm version / CI status / license badges in README
 - `demo:typecheck` / `demo:build` / `lint:ci` / `format:check` scripts — `demo/` previously had no working typecheck (plain `tsc` silently skips `.vue` files without `vue-tsc`)
+
+### Fixed
+
+- CI failed on Node 18.x with `SyntaxError: The requested module 'node:util' does not provide an export named 'styleText'`, thrown from inside `rolldown` (Vite 8's bundler) before any of this package's own code ran. Confirmed by reproducing on real Node 18.12.0 and 20.10.0 (both fail identically) and Node 22.23.2 (works) via local `nvm` — `styleText` isn't exported by `node:util` at all before Node 20.12/22, and Vite 8/`rolldown` themselves declare `engines.node: "^20.19.0 || >=22.12.0"`. `engines.node` bumped to match exactly, and the CI matrix's `18.x` entry replaced with `20.x`/`22.x`. This is a *build-tooling* requirement only — the published `dist/` output doesn't use anything Node-20-specific, so it doesn't affect consumers running this package on an older Node; see [CONTRIBUTING.md](CONTRIBUTING.md#setup)
 
 ### Changed
 

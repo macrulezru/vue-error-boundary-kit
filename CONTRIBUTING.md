@@ -4,6 +4,8 @@ Thanks for considering a contribution to `vue-error-boundary-kit`.
 
 ## Setup
 
+Requires Node `^20.19.0 || >=22.12.0` — Vite 8's bundler (`rolldown`) imports `node:util`'s `styleText`, which doesn't exist at all on Node 18 and isn't present before Node 20.12/22 either; anything under those floors fails immediately with a `SyntaxError` from inside `rolldown`, not from this package's own code. This is a *build-tooling* requirement, not a runtime one — the published `dist/` output is plain ES2020 with zero dependencies beyond the `vue` peer, so consuming this package in an app on an older Node (e.g. an SSR server) is unaffected; `engines.node` reflects what's needed to build/test from source, which is also what CI enforces.
+
 ```bash
 npm install
 npm test
