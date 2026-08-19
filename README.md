@@ -9,9 +9,13 @@
   />
 </div>
 
+[![npm version](https://img.shields.io/npm/v/vue-error-boundary-kit.svg)](https://www.npmjs.com/package/vue-error-boundary-kit)
+[![CI](https://github.com/macrulezru/vue-error-boundary-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/macrulezru/vue-error-boundary-kit/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/vue-error-boundary-kit.svg)](LICENSE)
+
 Production-ready error boundaries for Vue 3 — a declarative `<ErrorBoundary>` component, a `useErrorBoundary()` composable for programmatic use, and an adapter-based reporting layer (Sentry / Bugsnag / LogRocket / plain HTTP) that isn't hard-baked into the core.
 
-Zero runtime dependencies beyond Vue itself. Core bundle (`<ErrorBoundary>` + `useErrorBoundary`) is ~1.8 kB gzip; every reporting adapter is its own entry point and only ships if you import it.
+Zero runtime dependencies beyond Vue itself. Core bundle (`<ErrorBoundary>` + `useErrorBoundary`) is ~2.1 kB gzip; every reporting adapter is its own entry point and only ships if you import it.
 
 ---
 
@@ -21,6 +25,7 @@ Zero runtime dependencies beyond Vue itself. Core bundle (`<ErrorBoundary>` + `u
 - [Quick start](#quick-start)
 - [API reference](#api-reference)
   - [`<ErrorBoundary>`](#errorboundary)
+  - [`<AsyncBoundary>`](#asyncboundary)
   - [`useErrorBoundary()`](#useerrorboundary)
   - [`useGlobalErrorCapture()`](#useglobalerrorcapture)
   - [Types](#types)
@@ -30,6 +35,8 @@ Zero runtime dependencies beyond Vue itself. Core bundle (`<ErrorBoundary>` + `u
 - [Nuxt integration](#nuxt-integration)
 - [Reporting adapters](#reporting-adapters)
 - [Rate-limiting & dedup](#rate-limiting--dedup)
+- [Breadcrumbs](#breadcrumbs)
+- [TanStack Query integration](#tanstack-query-integration)
 - [Debugging: error history](#debugging-error-history)
 - [SSR notes](#ssr-notes)
 - [Comparison](#comparison)
@@ -115,6 +122,31 @@ const boundary = ref()
   <button @click="boundary?.reset()">Reset from elsewhere</button>
 </template>
 ```
+
+### `<AsyncBoundary>`
+
+Separate entry point (`vue-error-boundary-kit/async-boundary`) — not part of the core bundle, so it costs nothing if you don't import it. Combines `<Suspense>` and `<ErrorBoundary>`, which today you'd otherwise nest by hand:
+
+```ts
+import { AsyncBoundary } from 'vue-error-boundary-kit/async-boundary'
+```
+
+```vue
+<AsyncBoundary :reset-keys="[userId]">
+  <template #default>
+    <UserProfile :id="userId" />
+    <!-- async setup() / async components allowed -->
+  </template>
+  <template #loading>
+    <Spinner />
+  </template>
+  <template #fallback="{ error, retry }">
+    <ErrorState :message="error.message" @retry="retry" />
+  </template>
+</AsyncBoundary>
+```
+
+It's a composition, not a reimplementation: internally it's `<ErrorBoundary>` wrapping a `<Suspense>`, so it accepts every `<ErrorBoundary>` prop (`resetKeys`, `maxRetries`, `reporter`, `shouldCatch`, …), emits the same `error`/`reset` events, and exposes the same `error`/`hasError`/`retryCount`/`canRetry`/`reset()`/`retry()` via a template ref — all handled by the one `onErrorCaptured` implementation `<ErrorBoundary>` already has. The only thing it adds is the `loading` slot, rendered while the default slot's async dependencies are pending. `retry()`/`reset()` remount the default slot, so a retried async operation genuinely re-runs (the `loading` slot reappears while it does) rather than just re-showing stale state.
 
 ### `useErrorBoundary()`
 
@@ -229,8 +261,42 @@ Nuxt ships its own `<NuxtErrorBoundary>` (wrapping `onErrorCaptured`) and the `e
 - `error.vue` handles errors that reach the *app root* (including ones a component-level boundary chose not to isolate, or that happened before any boundary mounted). Keep it as your last line of defense; use `<ErrorBoundary>` for the parts of the tree that should degrade gracefully instead of taking down the page.
 - Both rely on the same underlying `onErrorCaptured` mechanism, so the same [catch/no-catch list](#what-errorcaptured-does-and-doesnt-catch) applies either way.
 
+### The `vue-error-boundary-kit/nuxt` module
+
+Add it to `nuxt.config.ts` for auto-registration — no manual imports needed in your app code:
+
+```ts
+export default defineNuxtConfig({
+  modules: ['vue-error-boundary-kit/nuxt'],
+})
+```
+
+This registers `<ErrorBoundary>` as a global component and auto-imports `useErrorBoundary`, `useGlobalErrorCapture`, and `useNuxtErrorBoundary` (below) — verified end-to-end against a real Nuxt 4.5.2 app built from the published package tarball, including that `nuxt.config.ts`'s module-options typing actually catches a wrong-shaped option.
+
+Module options (all optional, both default `true`):
+
+```ts
+export default defineNuxtConfig({
+  modules: ['vue-error-boundary-kit/nuxt'],
+  errorBoundaryKit: {
+    component: true, // register <ErrorBoundary> globally
+    autoImports: true, // auto-import the three composables above
+  },
+})
+```
+
+`@nuxt/kit` is only a peer dependency of this package (`peerDependenciesMeta.optional`), never bundled into your app — it's already part of any Nuxt install, so there's nothing extra to add. Tested against Nuxt 4.5.2; the module's declared `compatibility: { nuxt: '>=3.0.0' }` is reasoned from `@nuxt/kit`'s own cross-major (2/3/4) design rather than independently re-verified against Nuxt 3.
+
+#### `useNuxtErrorBoundary()`
+
+`useErrorBoundary()`, plus Nuxt's own `vue:error` and `app:error` hooks wired in — i.e. it also catches what escapes *every* `<ErrorBoundary>` in your tree (a render/setup error that reached the app root uncaught) and Nuxt's own `showError()`/`createError()` fatal-error flow, neither of which a component-level boundary ever sees. Both hooks run isomorphically, so this covers SSR and the client alike. Typically called once, e.g. in `app.vue`:
+
 ```vue
 <!-- app.vue -->
+<script setup lang="ts">
+const { error } = useNuxtErrorBoundary({ reporter: sentryReporter })
+</script>
+
 <template>
   <ErrorBoundary :reporter="sentryReporter">
     <NuxtPage />
@@ -250,6 +316,7 @@ import { createHttpReporter } from 'vue-error-boundary-kit/adapters/http'
 import { createSentryReporter } from 'vue-error-boundary-kit/adapters/sentry'
 import { createBugsnagReporter } from 'vue-error-boundary-kit/adapters/bugsnag'
 import { createLogRocketReporter } from 'vue-error-boundary-kit/adapters/logrocket'
+import { createOtelReporter } from 'vue-error-boundary-kit/adapters/otel'
 ```
 
 - **`adapters/console`** — `createConsoleReporter({ logger?, prefix? })`, plus a ready-made `consoleReporter` instance. Logs via `console.error` by default; good dev-mode default. Messages are prefixed with `[vue-error-boundary-kit]` — pass `prefix: '[my-app]'` to rebrand it, or `prefix: ''` to drop it.
@@ -257,8 +324,9 @@ import { createLogRocketReporter } from 'vue-error-boundary-kit/adapters/logrock
 - **`adapters/sentry`** — `createSentryReporter({ client, tags? })`. `@sentry/vue` is never imported by this package — pass in your own already-initialized Sentry client (anything with a `captureException(error, hint?)` method); this stays a thin, structurally-typed wrapper.
 - **`adapters/bugsnag`** — `createBugsnagReporter({ client, severity? })`. Wraps `Bugsnag.notify(error, onError)`, setting `event.context`/`event.severity` and attaching an `errorBoundary` metadata section via `event.addMetadata(...)`. `@bugsnag/js` is never imported — pass in your own initialized client.
 - **`adapters/logrocket`** — `createLogRocketReporter({ client, tags? })`. Wraps `LogRocket.captureException(error, { tags, extra })`; since LogRocket requires scalar `extra` values, non-scalar context is `JSON.stringify`'d automatically. `logrocket` is never imported — pass in your own initialized client.
+- **`adapters/otel`** — `createOtelReporter({ tracer, spanName?, attributes? })`. Starts a span per error via your own already-initialized OTel `Tracer` (e.g. `trace.getTracer('my-app')`), calls `recordException()` + `setStatus({ code: ERROR })`, attaches the `CapturedError` fields as span attributes, then ends the span. `@opentelemetry/api` is never imported — pass in your own tracer. Want errors attached to the *current* span instead of a fresh one? Pass `{ startSpan: () => trace.getActiveSpan() ?? realTracer.startSpan(name) }` as the `tracer`.
 
-All five destination adapters accept a `CapturedError` and forward it somewhere; you can pass a reporter (or an array) to any `<ErrorBoundary>`, to `useErrorBoundary()`, or to `useGlobalErrorCapture()`.
+All six destination adapters accept a `CapturedError` and forward it somewhere; you can pass a reporter (or an array) to any `<ErrorBoundary>`, to `useErrorBoundary()`, or to `useGlobalErrorCapture()`.
 
 ## Rate-limiting & dedup
 
@@ -280,9 +348,60 @@ const reporter = createRateLimitedReporter([sentryReporter, consoleReporter], {
 
 "Identical" means the same `source` + `componentName` + `message`. This is itself an `ErrorReporter`, so it composes with everything else — pass it wherever you'd pass any other reporter.
 
+## Breadcrumbs
+
+`adapters/breadcrumbs` — a rolling window of "things that happened before the error", attached to reports automatically. Nothing is auto-instrumented: call `addBreadcrumb()` yourself from wherever you already have the information (a router hook, a click handler, a state-management action) — the same opt-in spirit as `useGlobalErrorCapture()`.
+
+```ts
+import { createBreadcrumbTrail, withBreadcrumbs } from 'vue-error-boundary-kit/adapters/breadcrumbs'
+
+const trail = createBreadcrumbTrail({ limit: 20 })
+
+router.afterEach((to) => {
+  trail.addBreadcrumb({ category: 'navigation', message: `→ ${to.fullPath}` })
+})
+
+const reporter = withBreadcrumbs(sentryReporter, { trail })
+```
+
+```vue
+<ErrorBoundary :reporter="[reporter, trail.record]">…</ErrorBoundary>
+```
+
+- `createBreadcrumbTrail({ limit? })` — `entries` (chronological, oldest first — the reverse of `createErrorHistory()`'s most-recent-first, matching how breadcrumbs read as a timeline elsewhere), `addBreadcrumb({ category, message, timestamp?, data? })`, `clear()`, and `record` — itself an `ErrorReporter`, so passing it alongside your real reporter(s) auto-adds every captured error to the trail too, meaning a later error's breadcrumbs include earlier ones.
+- `withBreadcrumbs(reporter, { trail, contextKey?, internalErrorPrefix? })` — wraps any reporter(s) so every `report()` call's `context` includes the trail's current entries under `contextKey` (default: `'breadcrumbs'`).
+
+## TanStack Query integration
+
+`<ErrorBoundary>`'s `retry()`/`reset()` only re-render the tree. A `useQuery()` that already failed doesn't care — it stays in its cached error state and, with `throwOnError` set, re-throws that same stale error on the very next render, before its query function ever runs again. `@tanstack/react-query` solves this with `QueryErrorResetBoundary`; `@tanstack/vue-query` has no equivalent primitive, so `vue-error-boundary-kit/tanstack-query` provides one:
+
+```ts
+import { useQueryErrorReset } from 'vue-error-boundary-kit/tanstack-query'
+```
+
+```vue
+<script setup lang="ts">
+const resetErroredQueries = useQueryErrorReset()
+</script>
+
+<template>
+  <ErrorBoundary :before-reset="resetErroredQueries">
+    <template #default>
+      <UserProfile :id="userId" />
+      <!-- uses useQuery({ ..., throwOnError: true }) -->
+    </template>
+    <template #fallback="{ error, retry }">
+      <ErrorState :message="error.message" @retry="retry" />
+    </template>
+  </ErrorBoundary>
+</template>
+```
+
+`useQueryErrorReset(options?)` returns a synchronous callback that resets every query currently in an error state (`queryClient.resetQueries({ predicate: (query) => query.state.status === 'error' })`) — wire it into `beforeReset` so it runs right before the boundary's own re-render, and the retried query actually refetches instead of instantly failing again. Options: `queryClient` (default: `useQueryClient()` from context), `id` (forwarded to `useQueryClient()` for multi-client setups), `internalErrorPrefix`. `@tanstack/vue-query` is an optional peer dependency — never imported unless you import this entry point.
+
 ## Debugging: error history
 
-`/devtools` — not a Vue Devtools browser-extension integration (that would need `@vue/devtools-api` as a real dependency, which conflicts with this package's zero-dependency core) but a small, dependency-free in-memory history you can drop into a page during development:
+`/devtools` — not a Vue Devtools browser-extension integration, but a small, dependency-free in-memory history you can drop into a page during development:
 
 ```ts
 import { createErrorHistory, ErrorHistoryPanel } from 'vue-error-boundary-kit/devtools'
@@ -298,11 +417,15 @@ const history = createErrorHistory({ limit: 50 })
 
 `history.record` is itself an `ErrorReporter` — it rides the existing reporter mechanism, so no other wiring is needed. `history.entries` is a reactive, most-recent-first array (capped at `limit`, default 50); `<ErrorHistoryPanel>` is an optional, dependency-free component that renders it (inline-styled, no separate CSS import needed) with a "Clear" button.
 
+> **Why not a real Vue Devtools extension integration?** Considered and declined. `@vue/devtools-api` isn't dependency-free itself — it pulls in `@vue/devtools-kit` and its own dependency tree, and a minimal bundled `setupDevtoolsPlugin()` call measures ~20 kB gzip on its own, over 9× this package's entire core budget (~2.1 kB gzip). Unlike the Sentry/Bugsnag/LogRocket adapters, there's no way to depend on it "structurally" without bundling it — a devtools inspector has no already-initialized external client to defer to. `<ErrorHistoryPanel>` covers the same debugging need without that cost, and without requiring the extension to be installed at all.
+
 ## SSR notes
 
 `<ErrorBoundary>` is SSR-safe in the sense that matters most: a failing subtree never crashes `renderToString` or turns into a full 500 page, and error events/reporters fire correctly on the server exactly like on the client.
 
 There is one honest limitation worth knowing, rooted in how Vue's SSR renderer works rather than in this package: on the client, `onErrorCaptured` setting reactive state triggers a genuine second render pass, so the fallback slot's markup replaces the failed content. Vue's server renderer has no equivalent "re-render" step — a component's `render()` has already returned by the time a descendant's failure is caught, so the server HTML for that specific position comes out as an empty placeholder rather than the fallback slot's own markup. Achieving pixel-perfect SSR fallback HTML would require either internal renderer APIs or re-executing the failing subtree's `setup()` a second time — both of which this package deliberately avoids (see [Vapor-mode readiness](#comparison) below).
+
+This was verified empirically, not just assumed: wrapping the default slot in `<Suspense>` doesn't change the outcome either, for both a synchronous throw and a rejected async `setup()` — `<Suspense>`'s SSR buffering only defers *unresolved* async dependencies so it can commit its `#default` branch once they settle; it has no mechanism, public or private, to commit its `#fallback` branch when a dependency *rejects* instead. A bare `<Suspense>` with no error boundary around it at all, whose `#default` branch's `setup()` rejects, still serializes to an empty placeholder — confirming this isn't specific to how this package uses `onErrorCaptured`.
 
 What *is* guaranteed, and covered by tests:
 
@@ -317,13 +440,17 @@ What *is* guaranteed, and covered by tests:
 |---|---|---|---|
 | Fallback UI | you build it every time | `#error` slot | `fallback` scoped slot: `error`, `reset`, `retry`, `retryCount`, `canRetry` |
 | Retry / reset | manual | manual | `resetKeys`, `resetOnPropsChange`, `maxRetries` built in |
-| Reporting | manual | manual | adapter pattern (`console`/`http`/`sentry`/`bugsnag`/`logrocket`), tree-shaken per adapter, exactly-once across nested boundaries |
+| Reporting | manual | manual | adapter pattern (`console`/`http`/`sentry`/`bugsnag`/`logrocket`/`otel`), tree-shaken per adapter, exactly-once across nested boundaries |
 | Mass-failure protection | — | — | `adapters/rate-limit` — dedup + rate-limit wrapper for any reporter |
+| Breadcrumbs | — | — | `adapters/breadcrumbs` — rolling event trail, opt-in, attached to reports via `withBreadcrumbs()` |
+| TanStack Query retry | manual `resetQueries()` wiring | manual `resetQueries()` wiring | `tanstack-query`'s `useQueryErrorReset()` — one call, wired into `beforeReset` |
 | Debug history | — | — | `/devtools` — `createErrorHistory()` + `<ErrorHistoryPanel>` |
 | Programmatic use | — | — | `useErrorBoundary()` |
 | Beyond `errorCaptured` | — | — | `useGlobalErrorCapture()` (opt-in, separate entry point) |
+| Nuxt module | — | is one | `vue-error-boundary-kit/nuxt` — auto-registers `<ErrorBoundary>` + auto-imports; `useNuxtErrorBoundary()` also catches what escapes every boundary via Nuxt's own `vue:error`/`app:error` hooks |
+| Suspense + error boundary combined | you nest `<Suspense>` and your own boundary by hand | you nest `<Suspense>` and `<NuxtErrorBoundary>` by hand | `async-boundary`'s `<AsyncBoundary>` — one component, `default`/`loading`/`fallback` slots |
 | SSR | works, no fallback swap | works, no fallback swap | works, no fallback swap *(see [SSR notes](#ssr-notes) — this is a Vue architecture limit, not specific to any of these)* |
-| Bundle cost | 0 | part of Nuxt | ~1.8 kB gzip core; adapters/devtools are separate entry points |
+| Bundle cost | 0 | part of Nuxt | ~2.1 kB gzip core; adapters/devtools are separate entry points |
 | Vapor-mode readiness | N/A | depends on Nuxt | only uses official `onErrorCaptured`/`h()` — no internal VDOM renderer APIs |
 
 Not in v1: a full Vue Devtools browser-extension custom inspector (the in-app `<ErrorHistoryPanel>` above covers the same need without adding `@vue/devtools-api` as a dependency).

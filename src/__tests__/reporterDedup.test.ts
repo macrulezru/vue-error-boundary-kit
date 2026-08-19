@@ -5,8 +5,10 @@ import ErrorBoundary from '../ErrorBoundary.vue'
 import type { ErrorReporter } from '../types'
 import { Boom } from './helpers'
 
-function makeReporter(): ErrorReporter & { report: ReturnType<typeof vi.fn> } {
-  return { report: vi.fn() }
+function makeReporter(): ErrorReporter & {
+  report: ReturnType<typeof vi.fn<ErrorReporter['report']>>
+} {
+  return { report: vi.fn<ErrorReporter['report']>() }
 }
 
 describe('ErrorBoundary — case 10: reporter dedup across nested boundaries', () => {

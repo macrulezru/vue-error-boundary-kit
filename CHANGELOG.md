@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `vue-error-boundary-kit/nuxt` — a real Nuxt module (`defineNuxtModule`), not just documentation: auto-registers `<ErrorBoundary>` as a global component and auto-imports `useErrorBoundary`/`useGlobalErrorCapture`/`useNuxtErrorBoundary` (`component`/`autoImports` options, both default `true`). `@nuxt/kit` is an optional peer dependency, never bundled — Nuxt itself always has it available. Verified end-to-end against a real Nuxt 4.5.2 app built from the published package tarball (`npm pack` → install → `nuxi prepare`), including that `nuxt.config.ts`'s `errorBoundaryKit` option is actually type-checked (proven with a deliberate `@ts-expect-error` + negative control)
+- `useNuxtErrorBoundary()` (`vue-error-boundary-kit/nuxt/runtime`) — `useErrorBoundary()` wired to Nuxt's own `vue:error`/`app:error` hooks, so it also catches what escapes every `<ErrorBoundary>` in the tree and Nuxt's own `showError()`/`createError()` flow, isomorphically (SSR + client)
+- `vue-error-boundary-kit/tanstack-query` — `useQueryErrorReset()`, the Vue-Query equivalent of `@tanstack/react-query`'s `QueryErrorResetBoundary` (which `@tanstack/vue-query` doesn't ship): resets every currently-errored query via `queryClient.resetQueries({ predicate })`, meant to be wired into `<ErrorBoundary>`'s `beforeReset` so a retry actually refetches instead of instantly re-throwing the stale cached error. `@tanstack/vue-query` is an optional peer dependency. Verified with a real `useQuery`/`throwOnError` component mounted under a real `<ErrorBoundary>` — the retried query's `queryFn` is confirmed to actually re-run
+- `adapters/otel` — `createOtelReporter({ tracer, spanName?, attributes? })`: starts a span per error, calls `recordException()` + `setStatus({ code: ERROR })`, attaches the `CapturedError` fields as span attributes. Structurally typed like the Sentry/Bugsnag/LogRocket adapters — `@opentelemetry/api` is never imported by this package (verified: a minimal real usage of it bundles to ~2.8 kB gzip on its own, so importing it directly would cost every consumer of this adapter, unlike Sentry/Bugsnag/LogRocket where the SDK is assumed already-initialized for other reasons)
+- `<AsyncBoundary>` (`vue-error-boundary-kit/async-boundary`) — `<Suspense>` and `<ErrorBoundary>` combined into one component (`default`/`loading`/`fallback` slots), for the async-setup/async-component case that today needs manual nesting. A composition over the existing `<ErrorBoundary>` (same props/events/exposed API), not a reimplementation — kept as its own entry point rather than added to the core bundle, so it costs nothing unless imported
+- `adapters/breadcrumbs` — `createBreadcrumbTrail({ limit? })` (a rolling, manually-recorded event trail — nothing auto-instrumented) + `withBreadcrumbs(reporter, { trail, contextKey? })`, a reporter wrapper that merges the trail's current entries into every `report()` call's context. `trail.record` is itself an `ErrorReporter`, so captured errors can feed the same trail. Its own isolated entry point — core bundle untouched
+- CI (GitHub Actions): lint/format/typecheck/test+coverage/build on every push/PR (Node 18.x & 20.x), plus a tag-triggered publish workflow
+- `CONTRIBUTING.md`, issue templates (bug report / feature request), PR template
+- npm version / CI status / license badges in README
+- `demo:typecheck` / `demo:build` / `lint:ci` / `format:check` scripts — `demo/` previously had no working typecheck (plain `tsc` silently skips `.vue` files without `vue-tsc`)
+
+### Changed
+
+- Core bundle grew from ~1.8 kB to ~2.1 kB gzip — `useErrorBoundary` and `ErrorBoundary.vue` are now shared chunks between the core entry and, respectively, `/nuxt/runtime` and `/async-boundary`, so Rollup splits each into its own small chunk instead of inlining them once. Still comfortably inside the documented 3 kB budget
+- README: documented, with empirical evidence, that `<Suspense>` cannot be used to get real fallback markup into server-rendered HTML (see [SSR notes](README.md#ssr-notes)) — the existing limitation stands, now verified rather than assumed
+- README: documented why a real Vue Devtools browser-extension integration was considered and declined (`@vue/devtools-api` alone costs ~20 kB gzip, over 9× this package's core budget) — see [Debugging: error history](README.md#debugging-error-history)
+- Bumped the dev/build toolchain to latest majors: Vite 8, Vitest 4, `@vitest/coverage-v8` 4, `vite-plugin-dts` 5, `@vitejs/plugin-vue` 6, `vue-tsc` 3, `happy-dom` 20, ESLint 10.8, `typescript-eslint` 8.67, Prettier 3.9. TypeScript stays on 6.0.x rather than jumping to 7.x — `vue-tsc` (even at latest) fails outright against TypeScript 7's restructured package exports; 6.0.x is the newest release both `vue-tsc` and `typescript-eslint` actually support. No runtime or public API changes.
+- `vite.config.ts`: `minify: 'esbuild'` → `minify: true` — Vite 8's default bundler (`rolldown`) no longer pulls in the `esbuild` package, so the explicit option made `npm run build` fail; the default minifier needs no such package
+- Added `demo/.npmrc` (`workspaces-update=false`) — npm's default nested-project auto-linking was silently adding a `vue-error-boundary-kit: file:..` dependency into `demo/package.json` on every `npm install` inside `demo/`, redundant with (and confusing next to) the existing Vite-alias/tsconfig-paths resolution to `../src`
+
 ## [0.1.0] - 2026-07-18
 
 ### Added
