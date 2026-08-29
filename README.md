@@ -1,13 +1,6 @@
-<div align="center" style="background:#111827;border-radius:20px;padding:28px 20px 20px;margin-bottom:32px">
-  <h1 style="color:#f9fafb;margin:0 0 32px;font-size:2.2em;letter-spacing:-0.03em;font-weight:700;font-family:sans-serif">
-    vue-error-boundary-kit
-  </h1>
-  <img
-    src="https://s3.twcstorage.ru/c9a2cc89-780f97fd-311d-4a1a-b86f-c25665c9dc46/images/npm/vue-error-boundary-kit.webp"
-    alt="vue-virtual-scroller-kit"
-    style="max-width:100%;width:auto;height:300px;border-radius:12px"
-  />
-</div>
+# **Error Boundary Kit**
+
+![Error Boundary Kit](https://github.com/macrulezru/assets/blob/master/packages-images/vue-error-boundary-kit.png?raw=true)
 
 [![npm version](https://img.shields.io/npm/v/vue-error-boundary-kit.svg)](https://www.npmjs.com/package/vue-error-boundary-kit)
 [![CI](https://github.com/macrulezru/vue-error-boundary-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/macrulezru/vue-error-boundary-kit/actions/workflows/ci.yml)
@@ -548,7 +541,7 @@ MIT
 
 Danil Lisin Vladimirovich aka Macrulez
 
-GitHub: [macrulezru](https://github.com/macrulezru) · Website: [macrulez.ru/en](https://macrulez.ru/en)
+GitHub: [macrulezru](https://github.com/macrulezru) · Website: [npm.vuecraft.ru/en/](https://npm.vuecraft.ru/en/packages/vue-error-boundary-kit/)
 
 Questions and bugs — [issues](https://github.com/macrulezru/vue-error-boundary-kit/issues)
 

@@ -1,10 +1,10 @@
 {
   "name": "vue-error-boundary-kit",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Production-ready error boundaries for Vue 3 — declarative <ErrorBoundary> component, useErrorBoundary() composable, adapter-based error reporting (Sentry/Bugsnag/custom), SSR-safe.",
   "author": "macrulez <macrulezru@gmail.com> (https://macrulez.ru/en)",
   "license": "MIT",
-  "homepage": "https://github.com/macrulezru/vue-error-boundary-kit#readme",
+  "homepage": "https://npm.vuecraft.ru/en/packages/vue-error-boundary-kit/",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/macrulezru/vue-error-boundary-kit.git"
