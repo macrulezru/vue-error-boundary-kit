@@ -82,6 +82,47 @@ function handleError(error) {
 </template>
 ```
 
+### More examples
+
+#### Manual capture outside a template
+
+`useErrorBoundary()` catches what `errorCaptured` simply can't see — an error thrown inside an event handler, say, or while parsing untrusted data.
+
+```ts
+import { useErrorBoundary } from 'vue-error-boundary-kit'
+
+const { error, hasError, reset, captureError } = useErrorBoundary({
+  onError: (e) => report(e),
+  reporter: myReporter,
+})
+
+try {
+  JSON.parse(untrustedInput)
+} catch (err) {
+  captureError(err, { source: 'manual', componentName: 'ImportPanel' })
+}
+```
+
+#### Protection from a storm of identical error reports
+
+`createRateLimitedReporter` wraps any reporters and caps duplicates and bursts on its own — a broken list re-rendering hundreds of times a second won't flood Sentry with near-identical events.
+
+```ts
+import { createSentryReporter } from 'vue-error-boundary-kit/adapters/sentry'
+import { createRateLimitedReporter } from 'vue-error-boundary-kit/adapters/rate-limit'
+
+const sentryReporter = createSentryReporter({ client: sentryClient })
+
+const reporter = createRateLimitedReporter([sentryReporter], {
+  maxPerWindow: 10, // at most 10 reports forwarded per 10s window
+  dedupWindowMs: 10_000, // suppress identical repeats within this window
+})
+
+// Pass `reporter` to <ErrorBoundary>, useErrorBoundary(), or
+// useGlobalErrorCapture() — it composes with everything else, same as any
+// other ErrorReporter.
+```
+
 ---
 
 ## Documentation & links
