@@ -66,8 +66,9 @@ export function createHttpReporter(options: HttpReporterOptions): ErrorReporter 
     send(payload, useBeacon)
   }
 
+  const onPageHide = (): void => flush(true)
   if (typeof document !== 'undefined') {
-    document.addEventListener('pagehide', () => flush(true))
+    document.addEventListener('pagehide', onPageHide)
   }
 
   return {
@@ -80,6 +81,12 @@ export function createHttpReporter(options: HttpReporterOptions): ErrorReporter 
       if (timer === null) {
         timer = setTimeout(() => flush(), batchInterval)
       }
+    },
+    destroy() {
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('pagehide', onPageHide)
+      }
+      flush(true)
     },
   }
 }

@@ -35,6 +35,14 @@ export default defineNuxtModule<ModuleOptions>({
         filePath: 'vue-error-boundary-kit',
         export: 'ErrorBoundary',
       })
+      // Previously only <ErrorBoundary> was registered — <AsyncBoundary>
+      // (the async-data counterpart, vue-error-boundary-kit/async-boundary)
+      // needed a manual import even under Nuxt.
+      addComponent({
+        name: 'AsyncBoundary',
+        filePath: 'vue-error-boundary-kit/async-boundary',
+        export: 'AsyncBoundary',
+      })
     }
 
     if (options.autoImports) {
@@ -42,6 +50,20 @@ export default defineNuxtModule<ModuleOptions>({
         { name: 'useErrorBoundary', from: 'vue-error-boundary-kit' },
         { name: 'useGlobalErrorCapture', from: 'vue-error-boundary-kit/global-capture' },
         { name: 'useNuxtErrorBoundary', from: 'vue-error-boundary-kit/nuxt/runtime' },
+        { name: 'useRouterErrorBoundary', from: 'vue-error-boundary-kit/router' },
+        { name: 'useQueryErrorReset', from: 'vue-error-boundary-kit/tanstack-query' },
+        { name: 'createBackoffRetry', from: 'vue-error-boundary-kit/retry-backoff' },
+        { name: 'createErrorHistory', from: 'vue-error-boundary-kit/devtools' },
+        { name: 'createConsoleReporter', from: 'vue-error-boundary-kit/adapters/console' },
+        { name: 'consoleReporter', from: 'vue-error-boundary-kit/adapters/console' },
+        { name: 'createHttpReporter', from: 'vue-error-boundary-kit/adapters/http' },
+        { name: 'createSentryReporter', from: 'vue-error-boundary-kit/adapters/sentry' },
+        { name: 'createBugsnagReporter', from: 'vue-error-boundary-kit/adapters/bugsnag' },
+        { name: 'createLogRocketReporter', from: 'vue-error-boundary-kit/adapters/logrocket' },
+        { name: 'createRateLimitedReporter', from: 'vue-error-boundary-kit/adapters/rate-limit' },
+        { name: 'createOtelReporter', from: 'vue-error-boundary-kit/adapters/otel' },
+        { name: 'createBreadcrumbTrail', from: 'vue-error-boundary-kit/adapters/breadcrumbs' },
+        { name: 'withBreadcrumbs', from: 'vue-error-boundary-kit/adapters/breadcrumbs' },
       ])
     }
 

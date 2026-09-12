@@ -14,6 +14,13 @@ export interface CapturedError {
 
 export interface ErrorReporter {
   report(error: CapturedError, context?: Record<string, unknown>): void | Promise<void>
+  /**
+   * Optional teardown — reporters that register a persistent listener/timer
+   * (e.g. `createHttpReporter`'s `pagehide` listener) implement this so a
+   * consumer can actually remove it. A no-op reporter (most adapters) simply
+   * omits it.
+   */
+  destroy?(): void
 }
 
 /** Return false to let an error pass through untouched — e.g. ignore a cancelled fetch's AbortError. */
