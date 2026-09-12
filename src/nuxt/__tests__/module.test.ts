@@ -38,7 +38,7 @@ describe('vue-error-boundary-kit/nuxt module', () => {
     })
   })
 
-  it('registers <ErrorBoundary> as a global component by default', () => {
+  it('registers <ErrorBoundary> and <AsyncBoundary> as global components by default', () => {
     addComponent.mockClear()
     const { nuxt } = makeNuxt()
     mod.setup({ component: true, autoImports: true }, nuxt)
@@ -47,6 +47,14 @@ describe('vue-error-boundary-kit/nuxt module', () => {
       filePath: 'vue-error-boundary-kit',
       export: 'ErrorBoundary',
     })
+    // Regression: only <ErrorBoundary> used to be registered — <AsyncBoundary>
+    // needed a manual import even under Nuxt.
+    expect(addComponent).toHaveBeenCalledWith({
+      name: 'AsyncBoundary',
+      filePath: 'vue-error-boundary-kit/async-boundary',
+      export: 'AsyncBoundary',
+    })
+    expect(addComponent).toHaveBeenCalledTimes(2)
   })
 
   it('skips component registration when component: false', () => {
@@ -56,15 +64,38 @@ describe('vue-error-boundary-kit/nuxt module', () => {
     expect(addComponent).not.toHaveBeenCalled()
   })
 
-  it('auto-imports useErrorBoundary/useGlobalErrorCapture/useNuxtErrorBoundary by default', () => {
+  it('auto-imports every public composable/factory, not just 3', () => {
+    // Regression: only useErrorBoundary/useGlobalErrorCapture/useNuxtErrorBoundary
+    // were auto-imported — every other composable/factory (router, tanstack-query,
+    // retry/backoff, error history, every reporter adapter) needed a manual
+    // import even under Nuxt.
     addImports.mockClear()
     const { nuxt } = makeNuxt()
     mod.setup({ component: true, autoImports: true }, nuxt)
-    expect(addImports).toHaveBeenCalledWith([
-      { name: 'useErrorBoundary', from: 'vue-error-boundary-kit' },
-      { name: 'useGlobalErrorCapture', from: 'vue-error-boundary-kit/global-capture' },
-      { name: 'useNuxtErrorBoundary', from: 'vue-error-boundary-kit/nuxt/runtime' },
-    ])
+    const imported = addImports.mock.calls[0][0] as Array<{ name: string; from: string }>
+    const names = imported.map((i) => i.name)
+
+    expect(names).toEqual(
+      expect.arrayContaining([
+        'useErrorBoundary',
+        'useGlobalErrorCapture',
+        'useNuxtErrorBoundary',
+        'useRouterErrorBoundary',
+        'useQueryErrorReset',
+        'createBackoffRetry',
+        'createErrorHistory',
+        'createConsoleReporter',
+        'consoleReporter',
+        'createHttpReporter',
+        'createSentryReporter',
+        'createBugsnagReporter',
+        'createLogRocketReporter',
+        'createRateLimitedReporter',
+        'createOtelReporter',
+        'createBreadcrumbTrail',
+        'withBreadcrumbs',
+      ]),
+    )
   })
 
   it('skips auto-imports when autoImports: false', () => {

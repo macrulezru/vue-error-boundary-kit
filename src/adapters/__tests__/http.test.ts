@@ -90,4 +90,41 @@ describe('createHttpReporter', () => {
     expect(sendBeacon.mock.calls[0]?.[0]).toBe('/errors')
     expect(fetchMock).not.toHaveBeenCalled()
   })
+
+  it('destroy() removes the pagehide listener — a later pagehide no longer flushes', () => {
+    // Regression: the pagehide listener was registered permanently with no
+    // way to remove it — a reporter that should have been torn down kept
+    // flushing on every pagehide event for the rest of the page's lifetime.
+    vi.useFakeTimers()
+    const sendBeacon = vi.fn().mockReturnValue(true)
+    vi.stubGlobal('navigator', { sendBeacon })
+
+    const reporter = createHttpReporter({ endpoint: '/errors', batchInterval: 5000 })
+    reporter.destroy?.() // nothing queued yet — this destroy() flushes nothing
+
+    reporter.report(makeError('after-destroy'))
+    document.dispatchEvent(new Event('pagehide'))
+
+    // Without the fix, this pagehide would have flushed "after-destroy" via
+    // the still-registered listener. With destroy() removed it, nothing fires.
+    expect(sendBeacon).not.toHaveBeenCalled()
+  })
+
+  it('destroy() force-flushes any pending batch immediately', async () => {
+    vi.useFakeTimers()
+    const sendBeacon = vi.fn().mockReturnValue(true)
+    vi.stubGlobal('navigator', { sendBeacon })
+
+    const reporter = createHttpReporter({ endpoint: '/errors', batchInterval: 5000 })
+    reporter.report(makeError('pending'))
+    expect(sendBeacon).not.toHaveBeenCalled()
+
+    reporter.destroy?.()
+
+    expect(sendBeacon).toHaveBeenCalledTimes(1)
+    expect(sendBeacon.mock.calls[0]?.[0]).toBe('/errors')
+    const blob = sendBeacon.mock.calls[0]?.[1] as Blob
+    const payload = JSON.parse(await blob.text())
+    expect(payload.message).toBe('pending')
+  })
 })
